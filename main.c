@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
 				IO_burst_time *= 8;
 				IO_total_CPU_burst_time += CPU_burst_time;
 				IO_num_CPU_burst++;
-				if (IO_burst_time != -1) {
+				if (IO_burst_time != -8) {
 					IO_total_IO_burst_time += IO_burst_time;
 					IO_num_IO_burst++;
 				}
@@ -135,7 +135,6 @@ int main(int argc, char** argv) {
 				printf("==> CPU burst %ims ==> I/O burst %ims\n", CPU_burst_time, IO_burst_time);
 			}
 		}
-
 	}
 
 	double CPU_avg_CPU_burst_time = CPU_total_CPU_burst_time / CPU_num_CPU_burst;
@@ -151,12 +150,12 @@ int main(int argc, char** argv) {
 	fprintf(file, "-- number of processes: %d\n", n);
 	fprintf(file, "-- number of CPU-bound processes: %d\n", n_CPU);
 	fprintf(file, "-- number of I/O-bound processes: %d\n", n - n_CPU);
-	fprintf(file, "-- CPU-bound average CPU burst time: %.3f ms\n", CPU_avg_CPU_burst_time);
-	fprintf(file, "-- I/O-bound average CPU burst time: %.3f ms\n", IO_avg_CPU_burst_time);
-	fprintf(file, "-- overall average CPU burst time: %.3f ms\n", avg_CPU_burst_time);
-	fprintf(file, "-- CPU-bound average I/O burst time: %.3f ms\n", CPU_avg_IO_burst_time);
-	fprintf(file, "-- I/O-bound average I/O burst time: %.3f ms\n", IO_avg_IO_burst_time);
-	fprintf(file, "-- overall average I/O burst time:  %.3f ms\n", avg_IO_burst_time);
+	fprintf(file, "-- CPU-bound average CPU burst time: %.3f ms\n", ceil(CPU_avg_CPU_burst_time * 1000) / 1000);
+	fprintf(file, "-- I/O-bound average CPU burst time: %.3f ms\n", ceil(IO_avg_CPU_burst_time * 1000) / 1000);
+	fprintf(file, "-- overall average CPU burst time: %.3f ms\n", ceil(avg_CPU_burst_time * 1000) / 1000);
+	fprintf(file, "-- CPU-bound average I/O burst time: %.3f ms\n", ceil(CPU_avg_IO_burst_time * 1000) / 1000);
+	fprintf(file, "-- I/O-bound average I/O burst time: %.3f ms\n", ceil(IO_avg_IO_burst_time * 1000) / 1000);
+	fprintf(file, "-- overall average I/O burst time: %.3f ms\n", ceil(avg_IO_burst_time * 1000) / 1000);
 	fclose(file);
 
 	return EXIT_SUCCESS;
