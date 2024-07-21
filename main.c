@@ -33,12 +33,42 @@ void assign(int pid, int** ID_TABLE) {
 }
 
 int main(int argc, char** argv) {
+	if (argc != 6) {
+		fprintf(stderr, "ERROR: invalid number of arguments\n");
+		abort();
+	}
+
 	int n = atoi(*(argv+1));
 	int n_CPU = atoi(*(argv+2));
 	int seed = atoi(*(argv+3));
 	srand48(seed);
 	double lambda = atof(*(argv+4));
 	int bound = atoi(*(argv+5));
+
+	if (n <= 0) {
+		fprintf(stderr, "ERROR: invalid number of processes\n");
+		abort();
+	}
+
+	if (n_CPU < 0 || n_CPU > n) {
+		fprintf(stderr, "ERROR: invalid number of processes that are CPU-bound\n");
+		abort();
+	}
+
+	// if (seed) {
+	// 	fprintf(stderr, "ERROR: invalid seed value\n");
+	// 	abort();
+	// }
+
+	if (lambda <= 0) {
+		fprintf(stderr, "ERROR: invalid lambda value\n");
+		abort();
+	}
+
+	// if (bound) {
+	// 	fprintf(stderr, "ERROR: invalid seed value\n");
+	// 	abort();
+	// }
 
 	// keep count of children
 	int children = n;
