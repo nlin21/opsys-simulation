@@ -10,17 +10,35 @@
 #define ROWS 26
 #define COLS 10
 
-int next_exp(int lambda, int bound) {
-	int x = -log(drand48()) / lambda;
+int next_exp(double lambda, double bound) {
+	double r = drand48();
+	double x = -log(r) / lambda;
 	while (1) {
 		if (ceil(x) > bound) {
-			x = -log(drand48()) / lambda;
+			r = drand48();
+			x = -log(r) / lambda;
 		} else {
 			break;
 		}
 	}
 	return x;
 }
+
+// char* fetchCode(int pid, int** ID_TABLE) {
+// 	int m = -1;
+// 	int n = -1;
+// 	for (int i = 0; i < ROWS; ++i) {
+// 		for (int j = 0; j < COLS; ++j) {
+// 			if (*(*(ID_TABLE+i)+j) == pid) {
+// 				m = i;
+// 				n = j;
+// 				break;
+// 			}
+// 		}
+// 	}
+// 	char* code = calloc(2, sizeof(char));
+// 	*code = m + '0'
+// }
 
 void assign(int pid, int** ID_TABLE) {
 	for (int i = 0; i < ROWS; ++i) {
@@ -40,10 +58,10 @@ int main(int argc, char** argv) {
 
 	int n = atoi(*(argv+1));
 	int n_CPU = atoi(*(argv+2));
-	int seed = atoi(*(argv+3));
+	double seed = atof(*(argv+3));
 	srand48(seed);
 	double lambda = atof(*(argv+4));
-	int bound = atoi(*(argv+5));
+	double bound = atof(*(argv+5));
 
 	if (n <= 0) {
 		fprintf(stderr, "ERROR: invalid number of processes\n");
