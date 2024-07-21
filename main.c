@@ -10,7 +10,7 @@
 #define ROWS 26
 #define COLS 10
 
-int next_exp(double lambda, double bound) {
+int next_exp(double lambda, int bound) {
 	double r = drand48();
 	double x = -log(r) / lambda;
 	while (1) {
@@ -23,22 +23,6 @@ int next_exp(double lambda, double bound) {
 	}
 	return x;
 }
-
-// char* fetchCode(int pid, int** ID_TABLE) {
-// 	int m = -1;
-// 	int n = -1;
-// 	for (int i = 0; i < ROWS; ++i) {
-// 		for (int j = 0; j < COLS; ++j) {
-// 			if (*(*(ID_TABLE+i)+j) == pid) {
-// 				m = i;
-// 				n = j;
-// 				break;
-// 			}
-// 		}
-// 	}
-// 	char* code = calloc(2, sizeof(char));
-// 	*code = m + '0'
-// }
 
 int main(int argc, char** argv) {
 	if (argc != 6) {
@@ -92,23 +76,31 @@ int main(int argc, char** argv) {
 	printf("<<< -- seed=%d; lambda=%.6f; bound=%d\n", seed, lambda, bound);
 
 	for (int i = 0; i < n; ++i) {
-		if (i >= n_CPU-1) {
+		if (i >= n_CPU) {
 			type = 1;
 		}
+
+		int letter = 65 + (i / 10);
+		int number = i % 10;
 
 		// Step 1
 		int arrival_time = floor(next_exp(lambda, bound));
 
 		// Step 2
 		double uniform_distribution = drand48();
-		int CPU_bursts = ceil(uniform_distribution) * 32;
+		int CPU_bursts = ceil(uniform_distribution * 32);
+
+		if (type == 0) {
+			printf("CPU-bound process %c%i: arrival time %ims; %i CPU bursts:\n", letter, number, arrival_time, CPU_bursts);
+		} else {
+			printf("IO-bound process %c%i: arrival time: %ims; %i CPU bursts:\n", letter, number, arrival_time, CPU_bursts);
+		}
 
 		// Step 3
 		for (int i = 0; i < CPU_bursts; ++i) {
-
 			int CPU_burst_time = ceil(next_exp(lambda, bound));
 			int IO_burst_time = -1;
-			if (i == CPU_bursts-1) {	// do not generate IO burst time for the last CPU burst
+			if (i <= CPU_bursts-1) {	// do not generate IO burst time for the last CPU burst
 				IO_burst_time = ceil(next_exp(lambda, bound));
 			}
 			if (type == 0) {	// CPU-bound
@@ -116,7 +108,14 @@ int main(int argc, char** argv) {
 			} else {			// IO-bound
 				IO_burst_time *= 8;
 			}
+
+			if (i == CPU_bursts-1) {
+				printf("==> CPU burst %ims\n", CPU_burst_time);
+			} else {
+				printf("==> CPU burst %ims ==> I/O burst %ims\n", CPU_burst_time, IO_burst_time);
+			}
 		}
+
 	}
 
 	return EXIT_SUCCESS;
