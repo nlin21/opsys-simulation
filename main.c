@@ -10,7 +10,7 @@
 #define ROWS 26
 #define COLS 10
 
-int next_exp(double lambda, int bound) {
+double next_exp(double lambda, int bound) {
 	double r = drand48();
 	double x = -log(r) / lambda;
 	while (1) {
@@ -93,14 +93,14 @@ int main(int argc, char** argv) {
 		if (type == 0) {
 			printf("CPU-bound process %c%i: arrival time %ims; %i CPU bursts:\n", letter, number, arrival_time, CPU_bursts);
 		} else {
-			printf("IO-bound process %c%i: arrival time: %ims; %i CPU bursts:\n", letter, number, arrival_time, CPU_bursts);
+			printf("I/O-bound process %c%i: arrival time %ims; %i CPU bursts:\n", letter, number, arrival_time, CPU_bursts);
 		}
 
 		// Step 3
 		for (int i = 0; i < CPU_bursts; ++i) {
 			int CPU_burst_time = ceil(next_exp(lambda, bound));
 			int IO_burst_time = -1;
-			if (i <= CPU_bursts-1) {	// do not generate IO burst time for the last CPU burst
+			if (i < CPU_bursts-1) {	// do not generate IO burst time for the last CPU burst
 				IO_burst_time = ceil(next_exp(lambda, bound));
 			}
 			if (type == 0) {	// CPU-bound
