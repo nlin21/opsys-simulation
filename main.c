@@ -40,16 +40,6 @@ int next_exp(double lambda, double bound) {
 // 	*code = m + '0'
 // }
 
-void assign(int pid, int** ID_TABLE) {
-	for (int i = 0; i < ROWS; ++i) {
-		for (int j = 0; j < COLS; ++j) {
-			if (*(*(ID_TABLE+i)+j) == 0) {
-				*(*(ID_TABLE+i)+j) = pid;
-			}
-		}
-	}
-}
-
 int main(int argc, char** argv) {
 	if (argc != 6) {
 		fprintf(stderr, "ERROR: invalid number of arguments\n");
@@ -93,21 +83,18 @@ int main(int argc, char** argv) {
 	// 0 if CPU-bound, 1 if IO-bound
 	bool type = 0;
 
-	// two character code table
-	// if entry == 0, no process for that two character code
-	int** ID_TABLE = calloc(ROWS, sizeof(int*));
-	for (int i = 0; i < ROWS; ++i) {
-		*(ID_TABLE+i) = calloc(COLS, sizeof(int));
+	printf("<<< PROJECT PART I\n");
+	if (n_CPU == 1) {
+		printf("<<< -- process set (n=%d) with 1 CPU-bound process\n", n);
+	} else {
+		printf("<<< -- process set (n=%d) with %d CPU-bound processes\n", n, n_CPU);
 	}
+	printf("<<< -- seed=%d; lambda=%.6f; bound=%d\n", seed, lambda, bound);
 
-	pid_t p = -1;
 	for (int i = 0; i < n; ++i) {
 		if (i >= n_CPU-1) {
 			type = 1;
 		}
-
-		//printf("CHILD: Assigning process id %d to ID table\n", getpid());
-		assign(getpid(), ID_TABLE);
 
 		// Step 1
 		int arrival_time = floor(next_exp(lambda, bound));
@@ -118,6 +105,7 @@ int main(int argc, char** argv) {
 
 		// Step 3
 		for (int i = 0; i < CPU_bursts; ++i) {
+
 			int CPU_burst_time = ceil(next_exp(lambda, bound));
 			int IO_burst_time = -1;
 			if (i == CPU_bursts-1) {	// do not generate IO burst time for the last CPU burst
@@ -130,14 +118,6 @@ int main(int argc, char** argv) {
 			}
 		}
 	}
-	
-	printf("<<< PROJECT PART I\n");
-	if (n_CPU == 1) {
-		printf("<<< -- process set (n=%d) with 1 CPU-bound process\n", n);
-	} else {
-		printf("<<< -- process set (n=%d) with %d CPU-bound processes\n", n, n_CPU);
-	}
-	printf("<<< -- seed=%d; lambda=%.6f; bound=%d\n", seed, lambda, bound);
 
 	return EXIT_SUCCESS;
 }
