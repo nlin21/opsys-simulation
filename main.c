@@ -47,20 +47,15 @@ int main(int argc, char** argv) {
 		abort();
 	}
 
-	// if (seed) {
-	// 	fprintf(stderr, "ERROR: invalid seed value\n");
-	// 	abort();
-	// }
-
 	if (lambda <= 0) {
 		fprintf(stderr, "ERROR: invalid lambda value\n");
 		abort();
 	}
 
-	// if (bound) {
-	// 	fprintf(stderr, "ERROR: invalid seed value\n");
-	// 	abort();
-	// }
+	if (bound <= 0) {
+		fprintf(stderr, "ERROR: invalid bound value\n");
+		abort();
+	}
 
 	// keep count of children
 	int children = n;
