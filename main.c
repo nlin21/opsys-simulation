@@ -7,9 +7,6 @@
 #include <math.h>
 #include <stdbool.h>
 
-#define ROWS 26
-#define COLS 10
-
 double next_exp(double lambda, int bound) {
 	double r = drand48();
 	double x = -log(r) / lambda;
@@ -57,10 +54,18 @@ int main(int argc, char** argv) {
 		abort();
 	}
 
-	// keep count of children
-	int children = n;
 	// 0 if CPU-bound, 1 if IO-bound
 	bool type = 0;
+
+	double CPU_total_CPU_burst_time = 0;
+	double CPU_total_IO_burst_time = 0;
+	int CPU_num_CPU_burst = 0;
+	int CPU_num_IO_burst = 0;
+
+	double IO_total_CPU_burst_time = 0;
+	double IO_total_IO_burst_time = 0;
+	int IO_num_CPU_burst = 0;
+	int IO_num_IO_burst = 0;
 
 	printf("<<< PROJECT PART I\n");
 	if (n_CPU == 1) {
@@ -86,25 +91,45 @@ int main(int argc, char** argv) {
 		int CPU_bursts = ceil(uniform_distribution * 32);
 
 		if (type == 0) {
-			printf("CPU-bound process %c%i: arrival time %ims; %i CPU bursts:\n", letter, number, arrival_time, CPU_bursts);
+			if (CPU_bursts == 1) {
+				printf("CPU-bound process %c%i: arrival time %ims; 1 CPU burst:\n", letter, number, arrival_time);
+			} else {
+				printf("CPU-bound process %c%i: arrival time %ims; %i CPU bursts:\n", letter, number, arrival_time, CPU_bursts);
+			}
 		} else {
-			printf("I/O-bound process %c%i: arrival time %ims; %i CPU bursts:\n", letter, number, arrival_time, CPU_bursts);
+			if (CPU_bursts == 1) {
+				printf("I/O-bound process %c%i: arrival time %ims; 1 CPU burst:\n", letter, number, arrival_time);
+			} else {
+				printf("I/O-bound process %c%i: arrival time %ims; %i CPU bursts:\n", letter, number, arrival_time, CPU_bursts);
+			}
 		}
 
 		// Step 3
-		for (int i = 0; i < CPU_bursts; ++i) {
+		for (int j = 0; j < CPU_bursts; ++j) {
 			int CPU_burst_time = ceil(next_exp(lambda, bound));
 			int IO_burst_time = -1;
-			if (i < CPU_bursts-1) {	// do not generate IO burst time for the last CPU burst
+			if (j < CPU_bursts-1) {	// do not generate IO burst time for the last CPU burst
 				IO_burst_time = ceil(next_exp(lambda, bound));
 			}
 			if (type == 0) {	// CPU-bound
 				CPU_burst_time *= 4;
+				CPU_total_CPU_burst_time += CPU_burst_time;
+				CPU_num_CPU_burst++;
+				if (IO_burst_time != -1) {
+					CPU_total_IO_burst_time += IO_burst_time;
+					CPU_num_IO_burst++;
+				}
 			} else {			// IO-bound
 				IO_burst_time *= 8;
+				IO_total_CPU_burst_time += CPU_burst_time;
+				IO_num_CPU_burst++;
+				if (IO_burst_time != -1) {
+					IO_total_IO_burst_time += IO_burst_time;
+					IO_num_IO_burst++;
+				}
 			}
 
-			if (i == CPU_bursts-1) {
+			if (j == CPU_bursts-1) {
 				printf("==> CPU burst %ims\n", CPU_burst_time);
 			} else {
 				printf("==> CPU burst %ims ==> I/O burst %ims\n", CPU_burst_time, IO_burst_time);
@@ -112,6 +137,27 @@ int main(int argc, char** argv) {
 		}
 
 	}
+
+	double CPU_avg_CPU_burst_time = CPU_total_CPU_burst_time / CPU_num_CPU_burst;
+	double IO_avg_CPU_burst_time = IO_total_CPU_burst_time / IO_num_CPU_burst;
+	double avg_CPU_burst_time = (CPU_total_CPU_burst_time + IO_total_CPU_burst_time) / (CPU_num_CPU_burst + IO_num_CPU_burst);
+
+	double CPU_avg_IO_burst_time = CPU_total_IO_burst_time / CPU_num_IO_burst;
+	double IO_avg_IO_burst_time = IO_total_IO_burst_time / IO_num_IO_burst;
+	double avg_IO_burst_time = (CPU_total_IO_burst_time + IO_total_IO_burst_time) / (CPU_num_IO_burst + IO_num_IO_burst);
+
+	FILE *file;
+	file = fopen("simout.txt", "w");
+	fprintf(file, "-- number of processes: %d\n", n);
+	fprintf(file, "-- number of CPU-bound processes: %d\n", n_CPU);
+	fprintf(file, "-- number of I/O-bound processes: %d\n", n - n_CPU);
+	fprintf(file, "-- CPU-bound average CPU burst time: %.3f ms\n", CPU_avg_CPU_burst_time);
+	fprintf(file, "-- I/O-bound average CPU burst time: %.3f ms\n", IO_avg_CPU_burst_time);
+	fprintf(file, "-- overall average CPU burst time: %.3f ms\n", avg_CPU_burst_time);
+	fprintf(file, "-- CPU-bound average I/O burst time: %.3f ms\n", CPU_avg_IO_burst_time);
+	fprintf(file, "-- I/O-bound average I/O burst time: %.3f ms\n", IO_avg_IO_burst_time);
+	fprintf(file, "-- overall average I/O burst time:  %.3f ms\n", avg_IO_burst_time);
+	fclose(file);
 
 	return EXIT_SUCCESS;
 }
