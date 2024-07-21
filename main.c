@@ -137,13 +137,35 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	double CPU_avg_CPU_burst_time = CPU_total_CPU_burst_time / CPU_num_CPU_burst;
-	double IO_avg_CPU_burst_time = IO_total_CPU_burst_time / IO_num_CPU_burst;
-	double avg_CPU_burst_time = (CPU_total_CPU_burst_time + IO_total_CPU_burst_time) / (CPU_num_CPU_burst + IO_num_CPU_burst);
+	double CPU_avg_CPU_burst_time = 0;
+	if (CPU_num_CPU_burst != 0) {
+		CPU_avg_CPU_burst_time = CPU_total_CPU_burst_time / CPU_num_CPU_burst;
+	}
 
-	double CPU_avg_IO_burst_time = CPU_total_IO_burst_time / CPU_num_IO_burst;
-	double IO_avg_IO_burst_time = IO_total_IO_burst_time / IO_num_IO_burst;
-	double avg_IO_burst_time = (CPU_total_IO_burst_time + IO_total_IO_burst_time) / (CPU_num_IO_burst + IO_num_IO_burst);
+	double IO_avg_CPU_burst_time = 0;
+	if (IO_num_CPU_burst != 0) {
+		IO_avg_CPU_burst_time = IO_total_CPU_burst_time / IO_num_CPU_burst;
+	}
+	
+	double avg_CPU_burst_time = 0;
+	if (CPU_num_CPU_burst + IO_num_CPU_burst != 0) {
+		avg_CPU_burst_time = (CPU_total_CPU_burst_time + IO_total_CPU_burst_time) / (CPU_num_CPU_burst + IO_num_CPU_burst);
+	}
+
+	double CPU_avg_IO_burst_time = 0;
+	if (CPU_num_IO_burst != 0) {
+		CPU_avg_IO_burst_time = CPU_total_IO_burst_time / CPU_num_IO_burst;
+	}
+
+	double IO_avg_IO_burst_time = 0;
+	if (IO_num_IO_burst != 0) {
+		IO_avg_IO_burst_time = IO_total_IO_burst_time / IO_num_IO_burst;
+	}
+	
+	double avg_IO_burst_time = 0;
+	if (CPU_num_IO_burst + IO_num_IO_burst != 0) {
+		avg_IO_burst_time = (CPU_total_IO_burst_time + IO_total_IO_burst_time) / (CPU_num_IO_burst + IO_num_IO_burst);
+	}
 
 	FILE *file;
 	file = fopen("simout.txt", "w");
