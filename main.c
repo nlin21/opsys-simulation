@@ -58,10 +58,10 @@ int main(int argc, char** argv) {
 
 	int n = atoi(*(argv+1));
 	int n_CPU = atoi(*(argv+2));
-	double seed = atof(*(argv+3));
+	int seed = atof(*(argv+3));
 	srand48(seed);
 	double lambda = atof(*(argv+4));
-	double bound = atof(*(argv+5));
+	int bound = atof(*(argv+5));
 
 	if (n <= 0) {
 		fprintf(stderr, "ERROR: invalid number of processes\n");
@@ -102,21 +102,10 @@ int main(int argc, char** argv) {
 
 	pid_t p = -1;
 	for (int i = 0; i < n; ++i) {
-		p = fork();
-
-		if (p == -1) {
-			perror("fork() failed");
-			return EXIT_FAILURE;
-		}
-
 		if (i >= n_CPU-1) {
 			type = 1;
 		}
 
-		if (p == 0) break;
-	}
-
-	if (p == 0) {	// CHILD
 		//printf("CHILD: Assigning process id %d to ID table\n", getpid());
 		assign(getpid(), ID_TABLE);
 
@@ -138,21 +127,17 @@ int main(int argc, char** argv) {
 				CPU_burst_time *= 4;
 			} else {			// IO-bound
 				IO_burst_time *= 8;
-			}			
+			}
 		}
-	} else {
-		while (children > 0) {
-			waitpid(-1, NULL, 0);
-			children--;
-		}
-		printf("<<< PROJECT PART I\n");
-		if (n_CPU == 1) {
-			printf("<<< -- process set (n=%d) with 1 CPU-bound process\n", n);
-		} else {
-			printf("<<< -- process set (n=%d) with %d CPU-bound processes\n", n, n_CPU);
-		}
-		printf("<<< -- seed=%d; lambda=%.6f; bound=%d\n", seed, lambda, bound);
 	}
+	
+	printf("<<< PROJECT PART I\n");
+	if (n_CPU == 1) {
+		printf("<<< -- process set (n=%d) with 1 CPU-bound process\n", n);
+	} else {
+		printf("<<< -- process set (n=%d) with %d CPU-bound processes\n", n, n_CPU);
+	}
+	printf("<<< -- seed=%d; lambda=%.6f; bound=%d\n", seed, lambda, bound);
 
 	return EXIT_SUCCESS;
 }
