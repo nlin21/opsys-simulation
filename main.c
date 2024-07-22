@@ -7,7 +7,7 @@
 #include <math.h>
 #include <stdbool.h>
 
-double next_exp(double lambda, int bound) {
+double next_exp(double lambda, long bound) {
 	double r = drand48();
 	double x = -log(r) / lambda;
 	while (1) {
@@ -29,11 +29,10 @@ int main(int argc, char** argv) {
 
 	int n = atoi(*(argv+1));
 	int n_CPU = atoi(*(argv+2));
-	int seed = atof(*(argv+3));
+	long seed = strtol(*(argv+3), NULL, 10);
 	srand48(seed);
 	double lambda = atof(*(argv+4));
-	int bound = atof(*(argv+5));
-
+	long bound = strtol(*(argv+5), NULL, 10);
 	if (n <= 0) {
 		fprintf(stderr, "ERROR: invalid number of processes\n");
 		abort();
@@ -73,7 +72,7 @@ int main(int argc, char** argv) {
 	} else {
 		printf("<<< -- process set (n=%d) with %d CPU-bound processes\n", n, n_CPU);
 	}
-	printf("<<< -- seed=%d; lambda=%.6f; bound=%d\n", seed, lambda, bound);
+	printf("<<< -- seed=%ld; lambda=%.6f; bound=%ld\n", seed, lambda, bound);
 
 	for (int i = 0; i < n; ++i) {
 		if (i >= n_CPU) {
