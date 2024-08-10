@@ -162,3 +162,4 @@ if (__name__ == "__main__"):
 	f.write("-- CPU-bound average I/O burst time: {:.3f} ms\n".format(math.ceil(CPU_avg_IO_burst_time * 1000) / 1000))
 	f.write("-- I/O-bound average I/O burst time: {:.3f} ms\n".format(math.ceil(IO_avg_IO_burst_time * 1000) / 1000))
 	f.write("-- overall average I/O burst time: {:.3f} ms\n".format(math.ceil(avg_IO_burst_time * 1000) / 1000))
+	f.close()
