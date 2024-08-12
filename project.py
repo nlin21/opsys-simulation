@@ -101,6 +101,7 @@ def FCFS(t_cs, alpha, t_slice):
 
 				if (p.current_burst_no == len(p.CPU_burst_times)):
 					print("time {:d}ms: Process {} terminated {}".format(time, p.id, parseQueue(queue)))
+					time += t_cs // 2
 					processes.remove(p)
 					continue
 				
@@ -131,8 +132,6 @@ def FCFS(t_cs, alpha, t_slice):
 			continue
 
 		time += 1
-
-	time += t_cs // 2
 
 	print("time {:d}ms: Simulator ended for FCFS [Q empty]".format(time))
 			
