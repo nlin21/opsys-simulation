@@ -174,6 +174,113 @@ def FCFS(t_cs, alpha, t_slice):
 		
 		time += 1
 
+def SJF(t_cs, alpha, t_slice):
+	defaultAllProcesses()
+
+	time = 0
+	processes = flattenProcessTable()
+	current_burst = [-1,-1,-1,-1]		# [Process object, When will it finish switching in?, When will it complete?, When will it finish switching out?]
+
+	ready_queue = []
+	blocked_processes = []
+	using_CPU = False
+
+	print("time 0ms: Simulator started for SJF [Q empty]")
+
+	while (True):
+
+		# Check if any process finished blocking on I/O
+		if (blocked_processes):
+			for blocked in blocked_processes:
+				if (time == blocked[1]): 		# blocked process finished blocking?
+					process = blocked[0]
+					ready_queue.append(process)
+					ready_queue.sort(key=lambda x: (x.tau, x.id[0], x.id[1]))
+					if (time < 10000): 
+						print("time {:d}ms: Process {} (tau {:d}ms) completed I/O; added to ready queue {}"
+							.format(time, process.id, process.tau, parseQueue(ready_queue)))
+					blocked_processes.remove(blocked)
+
+		# Has process finished switching in? If yes, we can start the process
+		if (time == current_burst[1]):
+			if (time < 10000): 
+				process = current_burst[0]
+				process_burst_time = current_burst[2] - current_burst[1]
+				print("time {:d}ms: Process {} (tau {:d}ms) started using the CPU for {:d}ms burst {}"
+					.format(time, process.id, process.tau, process_burst_time, parseQueue(ready_queue)))
+				
+		# Has process finished switching out? If yes, we can block on I/O and mark the CPU ready
+		if (using_CPU and time == current_burst[3]):
+			process = current_burst[0]
+			if (process.current_burst_no == len(process.CPU_burst_times)):
+				processes.remove(process)
+			else:
+				blocked = [-1, -1]			# [Process object, when will it be unblocked?]
+				blocked[0] = process
+				blocked[1] = time + t_cs // 2 + process.IO_burst_times[process.current_burst_no - 1]
+				blocked_processes.append(b)
+				current_burst = [-1,-1,-1,-1]	# Reset current CPU burst data
+			using_CPU = False
+
+
+		# Has process completed? If yes, we should start switching it out
+		if (using_CPU):
+			if (time == current_burst[2]):
+				process = current_burst[0]
+				process.current_burst_no += 1
+				process_old_tau = process.tau
+
+				if (process.current_burst_no == len(process.CPU_burst_times)):
+					print("time {:d}ms: Process {} terminated {}".format(time, process.id, parseQueue(ready_queue)))
+				else:
+					bursts_left = len(process.CPU_burst_times) - process.current_burst_no
+					if (bursts_left == 1):
+						if (time < 10000): 
+							print("time {:d}ms: Process {} (tau {:d}ms) completed a CPU burst; 1 burst to go {}"
+			 					.format(time, process.id, process.tau, parseQueue(ready_queue)))
+					else:
+						if (time < 10000): 
+							print("time {:d}ms: Process {} (tau {:d}ms) completed a CPU burst; {:d} bursts to go {}"
+								.format(time, process.id, process.tau, bursts_left, parseQueue(ready_queue)))
+							
+					process.tau = math.ceil(process.CPU_burst_times[process.current_burst_no-1] * alpha + (1 - alpha) * process.tau)
+					if (time < 10000): print("time {:d}ms: Recalculated tau for process {}: old tau {:d}ms ==> new tau {:d}ms {}"
+							.format(time, process.id, process_old_tau, process.tau, parseQueue(ready_queue)))
+
+					b = [-1, -1]		# [Process object, when will it be unblocked?]
+					b[0] = process
+					b[1] = time + t_cs // 2 + process.IO_burst_times[process.current_burst_no - 1]
+					blocked_processes.append(b)
+
+					if (time < 10000): 
+						print("time {:d}ms: Process {} switching out of CPU; blocking on I/O until time {:d}ms {}"
+							.format(time, process.id, b[1], parseQueue(ready_queue)))
+
+		# Check if any process has arrivied
+		for process in processes:							
+			if (time == process.arrival_time):
+				ready_queue.append(process)
+				ready_queue.sort(key=lambda x: (x.tau, x.id[0], x.id[1]))
+				if (time < 10000): 
+					print("time {:d}ms: Process {} (tau {:d}ms) arrived; added to ready queue {}"
+		   				.format(time, process.id, process.tau, parseQueue(ready_queue)))
+					
+		# If not using CPU and there is a process in the ready queue, we should start switching it in
+		if (not using_CPU and ready_queue):		
+			process = ready_queue.pop(0)			
+			process_burst_time = process.CPU_burst_times[process.current_burst_no]
+			current_burst[0] = process												# Process object
+			current_burst[1] = time + t_cs // 2										# When will it finish switching in?
+			current_burst[2] = time + t_cs // 2 + process_burst_time				# When will it complete?
+			current_burst[3] = time + t_cs // 2 + process_burst_time + t_cs // 2	# When will it finish switching out?
+			using_CPU = True
+
+		if (not processes):
+			print("time {:d}ms: Simulator ended for SJF [Q empty]".format(time))
+			break
+		
+		time += 1
+
 
 if (__name__ == "__main__"):
 
@@ -304,6 +411,8 @@ if (__name__ == "__main__"):
 	print("<<< -- t_cs={:d}ms; alpha={:.2f}; t_slice={:d}ms".format(t_cs, alpha, t_slice))
 
 	FCFS(t_cs, alpha, t_slice)
+	print()
+	SJF(t_cs, alpha, t_slice)
 
 	CPU_avg_CPU_burst_time = 0
 	if (CPU_num_CPU_burst != 0):
