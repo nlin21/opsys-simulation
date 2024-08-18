@@ -1,0 +1,60 @@
+<<< PROJECT PART I
+<<< -- process set (n=8) with 6 CPU-bound processes
+<<< -- seed=512; lambda=0.001000; bound=1024
+CPU-bound process A0: arrival time 692ms; 6 CPU bursts
+CPU-bound process A1: arrival time 407ms; 10 CPU bursts
+CPU-bound process A2: arrival time 886ms; 1 CPU burst
+CPU-bound process A3: arrival time 368ms; 6 CPU bursts
+CPU-bound process A4: arrival time 269ms; 19 CPU bursts
+CPU-bound process A5: arrival time 44ms; 11 CPU bursts
+I/O-bound process A6: arrival time 589ms; 7 CPU bursts
+I/O-bound process A7: arrival time 825ms; 22 CPU bursts
+
+<<< PROJECT PART II
+<<< -- t_cs=6ms; alpha=0.90; t_slice=128ms
+time 0ms: Simulator started for FCFS [Q empty]
+time 44ms: Process A5 arrived; added to ready queue [Q A5]
+time 47ms: Process A5 started using the CPU for 2428ms burst [Q empty]
+time 269ms: Process A4 arrived; added to ready queue [Q A4]
+time 368ms: Process A3 arrived; added to ready queue [Q A4 A3]
+time 407ms: Process A1 arrived; added to ready queue [Q A4 A3 A1]
+time 589ms: Process A6 arrived; added to ready queue [Q A4 A3 A1 A6]
+time 692ms: Process A0 arrived; added to ready queue [Q A4 A3 A1 A6 A0]
+time 825ms: Process A7 arrived; added to ready queue [Q A4 A3 A1 A6 A0 A7]
+time 886ms: Process A2 arrived; added to ready queue [Q A4 A3 A1 A6 A0 A7 A2]
+time 2475ms: Process A5 completed a CPU burst; 10 bursts to go [Q A4 A3 A1 A6 A0 A7 A2]
+time 2475ms: Process A5 switching out of CPU; blocking on I/O until time 3042ms [Q A4 A3 A1 A6 A0 A7 A2]
+time 2481ms: Process A4 started using the CPU for 216ms burst [Q A3 A1 A6 A0 A7 A2]
+time 2697ms: Process A4 completed a CPU burst; 18 bursts to go [Q A3 A1 A6 A0 A7 A2]
+time 2697ms: Process A4 switching out of CPU; blocking on I/O until time 2760ms [Q A3 A1 A6 A0 A7 A2]
+time 2703ms: Process A3 started using the CPU for 768ms burst [Q A1 A6 A0 A7 A2]
+time 2760ms: Process A4 completed I/O; added to ready queue [Q A1 A6 A0 A7 A2 A4]
+time 3042ms: Process A5 completed I/O; added to ready queue [Q A1 A6 A0 A7 A2 A4 A5]
+time 3471ms: Process A3 completed a CPU burst; 5 bursts to go [Q A1 A6 A0 A7 A2 A4 A5]
+time 3471ms: Process A3 switching out of CPU; blocking on I/O until time 4416ms [Q A1 A6 A0 A7 A2 A4 A5]
+time 3477ms: Process A1 started using the CPU for 2720ms burst [Q A6 A0 A7 A2 A4 A5]
+time 4416ms: Process A3 completed I/O; added to ready queue [Q A6 A0 A7 A2 A4 A5 A3]
+time 6197ms: Process A1 completed a CPU burst; 9 bursts to go [Q A6 A0 A7 A2 A4 A5 A3]
+time 6197ms: Process A1 switching out of CPU; blocking on I/O until time 6767ms [Q A6 A0 A7 A2 A4 A5 A3]
+time 6203ms: Process A6 started using the CPU for 36ms burst [Q A0 A7 A2 A4 A5 A3]
+time 6239ms: Process A6 completed a CPU burst; 6 bursts to go [Q A0 A7 A2 A4 A5 A3]
+time 6239ms: Process A6 switching out of CPU; blocking on I/O until time 8026ms [Q A0 A7 A2 A4 A5 A3]
+time 6245ms: Process A0 started using the CPU for 2552ms burst [Q A7 A2 A4 A5 A3]
+time 6767ms: Process A1 completed I/O; added to ready queue [Q A7 A2 A4 A5 A3 A1]
+time 8026ms: Process A6 completed I/O; added to ready queue [Q A7 A2 A4 A5 A3 A1 A6]
+time 8797ms: Process A0 completed a CPU burst; 5 bursts to go [Q A7 A2 A4 A5 A3 A1 A6]
+time 8797ms: Process A0 switching out of CPU; blocking on I/O until time 9819ms [Q A7 A2 A4 A5 A3 A1 A6]
+time 8803ms: Process A7 started using the CPU for 956ms burst [Q A2 A4 A5 A3 A1 A6]
+time 9759ms: Process A7 completed a CPU burst; 21 bursts to go [Q A2 A4 A5 A3 A1 A6]
+time 9759ms: Process A7 switching out of CPU; blocking on I/O until time 10994ms [Q A2 A4 A5 A3 A1 A6]
+time 9765ms: Process A2 started using the CPU for 1008ms burst [Q A4 A5 A3 A1 A6]
+time 9819ms: Process A0 completed I/O; added to ready queue [Q A4 A5 A3 A1 A6 A0]
+time 10773ms: Process A2 terminated [Q A4 A5 A3 A1 A6 A0]
+time 51573ms: Process A3 terminated [Q A6 A1 A0 A4 A7 A5]
+time 56995ms: Process A0 terminated [Q A4 A7 A5 A1]
+time 66620ms: Process A6 terminated [Q A5 A7 A1 A4]
+time 67649ms: Process A1 terminated [Q A4 A5]
+time 73445ms: Process A5 terminated [Q A7 A4]
+time 93712ms: Process A4 terminated [Q A7]
+time 133403ms: Process A7 terminated [Q empty]
+time 133406ms: Simulator ended for FCFS [Q empty]

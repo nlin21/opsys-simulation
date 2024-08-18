@@ -26,7 +26,6 @@ processes_table = []
 ROWS = 26
 COLS = 10
 x_n = 0
-lmbda_c = -1
 
 def srand48(seed):
 	global x_n
@@ -73,326 +72,108 @@ def defaultAllProcesses():
 	for i in range(ROWS):
 		for j in range(COLS):
 			processes_table[i][j].current_burst_no = 0
-			processes_table[i][j].tau = math.ceil(1 / lmbda_c)
-			processes_table[i][j].tau_remaining = math.ceil(1 / lmbda_c)
+			processes_table[i][j].tau = math.ceil(1 / lmbda)
+			processes_table[i][j].tau_remaining = math.ceil(1 / lmbda)
 
 def FCFS(t_cs, alpha, t_slice):
 	defaultAllProcesses()
 
 	time = 0
 	processes = flattenProcessTable()
-	queue = []
-	
+	current_burst = [-1,-1,-1,-1]		# [Process object, When will it finish switching in?, When will it complete?, When will it finish switching out?]
+
+	ready_queue = []
+	blocked_processes = []
 	using_CPU = False
-	current_burst = [-1, -1, -1]		# [Process object, when will it finish?, when will it start?]
 
-	blocked = []
+	print("time 0ms: Simulator started for FCFS [Q empty]")
 
-	print("time 0ms: Simulator started for FCFS [Q empty]", flush=True)
+	while (True):
 
-	while (processes):
+		# Check if any process finished blocking on I/O
+		if (blocked_processes):
+			for blocked in blocked_processes:
+				if (time == blocked[1]): 		# blocked process finished blocking?
+					process = blocked[0]
+					ready_queue.append(process)
+					if (time < 10000): 
+						print("time {:d}ms: Process {} completed I/O; added to ready queue {}"
+							.format(time, process.id, parseQueue(ready_queue)))
+					blocked_processes.remove(blocked)
 
-		if (time == current_burst[2]):
-			p = current_burst[0]
-			
-			p_burst_time = current_burst[1] - current_burst[2]
+		# Has process finished switching in? If yes, we can start the process
+		if (time == current_burst[1]):
 			if (time < 10000): 
+				process = current_burst[0]
+				process_burst_time = current_burst[2] - current_burst[1]
 				print("time {:d}ms: Process {} started using the CPU for {:d}ms burst {}"
-					.format(time, p.id, p_burst_time, parseQueue(queue)), flush=True)
+					.format(time, process.id, process_burst_time, parseQueue(ready_queue)))
+				
+		# Has process finished switching out? If yes, we can block on I/O and mark the CPU ready
+		if (using_CPU and time == current_burst[3]):
+			process = current_burst[0]
+			if (process.current_burst_no == len(process.CPU_burst_times)):
+				processes.remove(process)
+			else:
+				blocked = [-1, -1]			# [Process object, when will it be unblocked?]
+				blocked[0] = process
+				blocked[1] = time + t_cs // 2 + process.IO_burst_times[process.current_burst_no - 1]
+				blocked_processes.append(b)
+				current_burst = [-1,-1,-1,-1]	# Reset current CPU burst data
+			using_CPU = False
 
-
-		for p in processes:
-			if (time == p.arrival_time):
-				queue.append(p)
-				if (time < 10000): print("time {:d}ms: Process {} arrived; added to ready queue {}".format(time, p.id, parseQueue(queue)), flush=True)
-
-		if (blocked):
-			for blocked_p in blocked:
-				if (time == blocked_p[1]): 	# blocked process finished blocking?
-					p = blocked_p[0]
-					queue.append(p)
-					if (time < 10000): print("time {:d}ms: Process {} completed I/O; added to ready queue {}".format(time, p.id, parseQueue(queue)), flush=True)
-					blocked.remove(blocked_p)
-		
+		# Has process completed? If yes, we should start switching it out
 		if (using_CPU):
-			if (time-t_cs//2 == current_burst[1]):	# current CPU burst completed?
-				ctime = time - t_cs//2
-				using_CPU = False
-				p = current_burst[0]
-				current_burst = [-1, -1, -1]	# empty current burst info
-				p.current_burst_no += 1
+			if (time == current_burst[2]):
+				process = current_burst[0]
+				process.current_burst_no += 1
 
-				if (p.current_burst_no == len(p.CPU_burst_times)):
-					print("time {:d}ms: Process {} terminated {}".format(ctime, p.id, parseQueue(queue)), flush=True)
-					#time += t_cs // 2
-					processes.remove(p)
-					continue
-				
-				bursts_left = len(p.CPU_burst_times) - p.current_burst_no
-				if (bursts_left == 1):
-					if (time < 10000): print("time {:d}ms: Process {} completed a CPU burst; 1 burst to go {}".format(ctime, p.id, parseQueue(queue)), flush=True)
+				if (process.current_burst_no == len(process.CPU_burst_times)):
+					print("time {:d}ms: Process {} terminated {}".format(time, process.id, parseQueue(ready_queue)))
 				else:
-					if (time < 10000): print("time {:d}ms: Process {} completed a CPU burst; {:d} bursts to go {}".format(ctime, p.id, bursts_left, parseQueue(queue)), flush=True)
-
-				b = [-1, -1]		# [Process object, when will it be unblocked?]
-				b[0] = p
-				b[1] = time  + p.IO_burst_times[p.current_burst_no - 1]
-				blocked.append(b)
-
-				if (time < 10000): print("time {:d}ms: Process {} switching out of CPU; blocking on I/O until time {:d}ms {}".format(ctime, p.id, b[1], parseQueue(queue)), flush=True)
-
-				# time += t_cs // 2
-				# continue
-				
-		if (not using_CPU and queue):
-			using_CPU = True
-			p = queue.pop(0)
-			p_burst_time = p.CPU_burst_times[p.current_burst_no]
-			current_burst[0] = p
-			current_burst[1] = time + t_cs // 2 + p_burst_time
-			current_burst[2] = time + t_cs // 2
-			#time += t_cs // 2
-			#if (time < 10000): print("time {:d}ms: Process {} started using the CPU for {:d}ms burst {}".format(time, p.id, p_burst_time, parseQueue(queue)))
-
-		time += 1
-
-	print("time {:d}ms: Simulator ended for FCFS [Q empty]".format(time), flush=True)
-
-def SJF(t_cs, alpha, t_slice):
-	defaultAllProcesses()
-
-	time = 0
-	processes = flattenProcessTable()
-	queue = []
-
-	using_CPU = False
-	current_burst = [-1, -1, -1]		# [Process object, when will it finish?, when will it start?]
-
-	blocked = []
-
-	print("time 0ms: Simulator started for SJF [Q empty]", flush=True)
-
-	while (processes):
-
-		if (time == current_burst[2]):
-			p = current_burst[0]
-			
-			p_burst_time = current_burst[1] - current_burst[2]
-			if (time < 10000): print("time {:d}ms: Process {} (tau {:d}ms) started using the CPU for {:d}ms burst {}"
-					.format(time, p.id, p.tau, p_burst_time, parseQueue(queue)), flush=True)
-
-		for p in processes:
-			if (time == p.arrival_time):
-				queue.append(p)
-				queue.sort(key=lambda x: (x.tau, x.id))
-				if (time < 10000): print("time {:d}ms: Process {} (tau {:d}ms) arrived; added to ready queue {}".format(time, p.id, p.tau, parseQueue(queue)), flush=True)
-		
-		if (blocked):
-			for blocked_p in blocked:
-				if (time == blocked_p[1]): 	# blocked process finished blocking?
-					p = blocked_p[0]
-					queue.append(p)
-					queue.sort(key=lambda x: (x.tau, x.id))
-					if (time < 10000): print("time {:d}ms: Process {} (tau {:d}ms) completed I/O; added to ready queue {}".format(time, p.id, p.tau, parseQueue(queue)), flush=True)
-					blocked.remove(blocked_p)
-
-		if (using_CPU):
-			if (time-t_cs//2 == current_burst[1]):	# current CPU burst completed?
-				ctime = time -t_cs//2
-				using_CPU = False
-				p = current_burst[0]
-				current_burst = [-1, -1, -1]	# empty current burst info
-
-				old_tau = p.tau
-				p.current_burst_no += 1
-
-				if (p.current_burst_no == len(p.CPU_burst_times)):
-					print("time {:d}ms: Process {} terminated {}".format(ctime, p.id, parseQueue(queue)), flush=True)
-					#time += t_cs // 2
-					processes.remove(p)
-					continue
-				
-				bursts_left = len(p.CPU_burst_times) - p.current_burst_no
-				if (bursts_left == 1):
-					if (time < 10000): print("time {:d}ms: Process {} (tau {:d}ms) completed a CPU burst; 1 burst to go {}".format(ctime, p.id, p.tau, parseQueue(queue)), flush=True)
-				else:
-					if (time < 10000): print("time {:d}ms: Process {} (tau {:d}ms) completed a CPU burst; {:d} bursts to go {}".format(ctime, p.id, p.tau, bursts_left, parseQueue(queue)), flush=True)
-
-				b = [-1, -1]		# [Process object, when will it be unblocked?]
-				b[0] = p
-				b[1] = time + p.IO_burst_times[p.current_burst_no - 1]
-				blocked.append(b)
-
-				p.tau = math.ceil(p.CPU_burst_times[p.current_burst_no-1] * alpha + (1 - alpha) * p.tau)
-				if (time < 10000): print("time {:d}ms: Recalculated tau for process {}: old tau {:d}ms ==> new tau {:d}ms {}".format(ctime, p.id, old_tau, p.tau, parseQueue(queue)), flush=True)
-
-				if (time < 10000): print("time {:d}ms: Process {} switching out of CPU; blocking on I/O until time {:d}ms {}".format(ctime, p.id, b[1], parseQueue(queue)), flush=True)
-				
-				# time += t_cs // 2
-				# continue
-
-		if (not using_CPU and queue):
-			using_CPU = True
-			p = queue.pop(0)
-			p_burst_time = p.CPU_burst_times[p.current_burst_no]
-			current_burst[0] = p
-			#time += t_cs // 2
-			current_burst[1] = time + t_cs // 2 + p_burst_time
-			current_burst[2] = time + t_cs // 2
-			#if (time < 10000): print("time {:d}ms: Process {} (tau {:d}ms) started using the CPU for {:d}ms burst {}".format(time, p.id, p.tau, p_burst_time, parseQueue(queue)))
-			#continue
-
-		time += 1
-
-	print("time {:d}ms: Simulator ended for SJF [Q empty]".format(time), flush=True)
-			
-def SRT(t_cs, alpha, t_slice):
-	defaultAllProcesses()
-
-	time = 0
-	processes = flattenProcessTable()
-	queue = []
-
-	using_CPU = False
-	current_burst = [-1, -1, -1, -1]		# [Process object, when will it finish?, when will it start?, preemption?]
-
-	preempted = []
-	blocked = []
-
-	print("time 0ms: Simulator started for SRT [Q empty]")
-
-	while (processes):
-
-		if (time == current_burst[2]):
-			p = current_burst[0]
-			
-			if (current_burst[3] == 0):		# not preempted
-				p_burst_time = current_burst[1] - current_burst[2]
-				if (time < 10000): print("time {:d}ms: Process {} (tau {:d}ms) started using the CPU for {:d}ms burst {}"
-						.format(time, p.id, p.tau, p_burst_time, parseQueue(queue)), flush=True)
-			else: 			# preempted
-				remaining = current_burst[1] - time
-				p_burst_time = p.CPU_burst_times[p.current_burst_no]
-				if (time < 10000): print("time {:d}ms: Process {} (tau {:d}ms) started using the CPU for remaining {:d}ms of {:d}ms burst {}"
-		   				.format(time, p.id, p.tau, remaining, p_burst_time, parseQueue(queue)), flush=True)
-
-		for p in processes:
-			if (time == p.arrival_time):
-				queue.append(p)
-				queue.sort(key=lambda x: (x.tau_remaining, x.id[0], x.id[1]))
-
-				if (time < 10000): print("time {:d}ms: Process {} (tau {:d}ms) arrived; added to ready queue {}".format(time, p.id, p.tau, parseQueue(queue)), flush=True)
-
-		if (using_CPU):
-			if (time-t_cs//2== current_burst[1]):	# current CPU burst completed?
-				ctime = time - t_cs//2
-				using_CPU = False
-				p = current_burst[0]
-				current_burst = [-1, -1, -1, -1]	# empty current burst info
-
-				old_tau = p.tau
-				p.current_burst_no += 1
-
-				if (p.current_burst_no == len(p.CPU_burst_times)):
-					print("time {:d}ms: Process {} terminated {}".format(ctime, p.id, parseQueue(queue)), flush=True)
-					#time += t_cs // 2
-					processes.remove(p)
-					continue
-				
-				bursts_left = len(p.CPU_burst_times) - p.current_burst_no
-				if (bursts_left == 1):
-					if (time < 10000): print("time {:d}ms: Process {} (tau {:d}ms) completed a CPU burst; 1 burst to go {}".format(ctime, p.id, p.tau, parseQueue(queue)), flush=True)
-				else:
-					if (time < 10000): print("time {:d}ms: Process {} (tau {:d}ms) completed a CPU burst; {:d} bursts to go {}".format(ctime, p.id, p.tau, bursts_left, parseQueue(queue)), flush=True)
-
-				p.tau = math.ceil(p.CPU_burst_times[p.current_burst_no-1] * alpha + (1 - alpha) * p.tau)
-				p.tau_remaining = p.tau
-				if (time < 10000): print("time {:d}ms: Recalculated tau for process {}: old tau {:d}ms ==> new tau {:d}ms {}".format(ctime, p.id, old_tau, p.tau, parseQueue(queue)), flush=True)
-
-				b = [-1, -1]		# [Process object, when will it be unblocked?]
-				b[0] = p
-				b[1] = time + p.IO_burst_times[p.current_burst_no - 1]
-				blocked.append(b)
-
-				if (time < 10000): print("time {:d}ms: Process {} switching out of CPU; blocking on I/O until time {:d}ms {}".format(ctime, p.id, b[1], parseQueue(queue)), flush=True)
-				
-				# time += t_cs // 2
-
-				# continue
-
-		
-		if (blocked):
-			for blocked_p in blocked:
-				if (time == blocked_p[1]): 			# blocked process finished blocking?
-					p = blocked_p[0]
-					c = current_burst[0]
-					queue.append(p)
-					queue.sort(key=lambda x: (x.tau_remaining, x.id[0], x.id[1]))
-
-					if (using_CPU and p.tau < c.tau_remaining):			# preemption
-						if (time < 10000): print("time {:d}ms: Process {} (tau {:d}ms) completed I/O; preempting {} (predicted remaining time {:d}ms) {}"
-								.format(time, p.id, p.tau, c.id, c.tau_remaining, parseQueue(queue)), flush=True)
-					
-						pre = [-1, -1]						# [Process object, time remaining]
-						pre[0] = c
-						pre[1] = current_burst[1] - time
-						preempted.append(pre)
-						queue.insert(0, c)
-						queue.remove(p)
-						queue.sort(key=lambda x: (x.tau_remaining, x.id[0], x.id[1]))
-						current_burst[0] = p
-						p_burst_time = p.CPU_burst_times[p.current_burst_no]
-						#time += t_cs
-						current_burst[1] = time + t_cs + p_burst_time
-						current_burst[2] = time + t_cs
-						current_burst[3] = 0
-
-						#print("time {:d}ms: Process {} (tau {:d}ms) started using the CPU for {:d}ms burst {}".format(time, p.id, p.tau, p_burst_time, parseQueue(queue)))
-
+					bursts_left = len(process.CPU_burst_times) - process.current_burst_no
+					if (bursts_left == 1):
+						if (time < 10000): 
+							print("time {:d}ms: Process {} completed a CPU burst; 1 burst to go {}"
+			 					.format(time, process.id, parseQueue(ready_queue)))
 					else:
-						
-						if (time < 10000): print("time {:d}ms: Process {} (tau {:d}ms) completed I/O; added to ready queue {}".format(time, p.id, p.tau, parseQueue(queue)), flush=True)
-					
-					blocked.remove(blocked_p)
+						if (time < 10000): 
+							print("time {:d}ms: Process {} completed a CPU burst; {:d} bursts to go {}"
+								.format(time, process.id, bursts_left, parseQueue(ready_queue)))
 
-		if (not using_CPU and queue):
+					b = [-1, -1]		# [Process object, when will it be unblocked?]
+					b[0] = process
+					b[1] = time + t_cs // 2 + process.IO_burst_times[process.current_burst_no - 1]
+					blocked_processes.append(b)
+
+					if (time < 10000): 
+						print("time {:d}ms: Process {} switching out of CPU; blocking on I/O until time {:d}ms {}"
+							.format(time, process.id, b[1], parseQueue(ready_queue)))
+
+		# Check if any process has arrivied
+		for process in processes:							
+			if (time == process.arrival_time):
+				ready_queue.append(process)
+				if (time < 10000): 
+					print("time {:d}ms: Process {} arrived; added to ready queue {}"
+		   				.format(time, process.id, parseQueue(ready_queue)))
+
+		# If not using CPU and there is a process in the ready queue, we should start switching it in
+		if (not using_CPU and ready_queue):		
+			process = ready_queue.pop(0)			
+			process_burst_time = process.CPU_burst_times[process.current_burst_no]
+			current_burst[0] = process												# Process object
+			current_burst[1] = time + t_cs // 2										# When will it finish switching in?
+			current_burst[2] = time + t_cs // 2 + process_burst_time				# When will it complete?
+			current_burst[3] = time + t_cs // 2 + process_burst_time + t_cs // 2	# When will it finish switching out?
 			using_CPU = True
-			resume_preempted = False
-			p = queue.pop(0)
-			for pre in preempted:
-				if (pre[0] == p): 
-					resume_preempted = True	
-					p_burst_time = p.CPU_burst_times[p.current_burst_no]
-					current_burst[0] = p
-					#time += t_cs // 2
-					current_burst[1] = time + t_cs // 2 + pre[1]
-					current_burst[2] = time + t_cs // 2
-					current_burst[3] = 1
 
-					# print("time {:d}ms: Process {} (tau {:d}ms) started using the CPU for remaining {:d}ms of {:d}ms burst {}"
-		   			# 		.format(time, p.id, p.tau, pre[1], p_burst_time, parseQueue(queue)))
-					
-					preempted.remove(pre)
-					break
-
-			if (resume_preempted): continue
-				
-			else:	# ok to switch in process to CPU
-				p_burst_time = p.CPU_burst_times[p.current_burst_no]
-				current_burst[0] = p
-				#time += t_cs // 2
-				current_burst[1] = time + t_cs // 2 + p_burst_time
-				current_burst[2] = time + t_cs // 2
-				current_burst[3] = 0
-				#print("time {:d}ms: Process {} (tau {:d}ms) started using the CPU for {:d}ms burst {}".format(time, p.id, p.tau, p_burst_time, parseQueue(queue)))
-				#continue
-
-		if (time >= current_burst[2] and current_burst[0] != -1):	# track remaining tau of current burst
-			current_burst[0].tau_remaining -= 1
-
+		if (not processes):
+			print("time {:d}ms: Simulator ended for FCFS [Q empty]".format(time))
+			break
+		
 		time += 1
 
-	print("time {:d}ms: Simulator ended for SRT [Q empty]".format(time), flush=True)
 
 if (__name__ == "__main__"):
 
@@ -406,7 +187,6 @@ if (__name__ == "__main__"):
 	seed = int(args[3])
 	srand48(seed)
 	lmbda = float(args[4])
-	lmbda_c = lmbda
 	bound = int(args[5])
 
 	t_cs = int(args[6])
@@ -449,11 +229,11 @@ if (__name__ == "__main__"):
 	
 	print("<<< PROJECT PART I", flush=True)
 	if (n_CPU == 1):
-		print("<<< -- process set (n={:d}) with 1 CPU-bound process".format(n), flush=True)
+		print("<<< -- process set (n={:d}) with 1 CPU-bound process".format(n))
 	else:
-		print("<<< -- process set (n={:d}) with {:d} CPU-bound processes".format(n, n_CPU), flush=True)
+		print("<<< -- process set (n={:d}) with {:d} CPU-bound processes".format(n, n_CPU))
 	
-	print("<<< -- seed={:d}; lambda={:.6f}; bound={:d}".format(seed, lmbda, bound), flush=True)
+	print("<<< -- seed={:d}; lambda={:.6f}; bound={:d}".format(seed, lmbda, bound))
 
 	for i in range(n):
 		if (i >= n_CPU):
@@ -465,8 +245,8 @@ if (__name__ == "__main__"):
 		row = int(letter - 65)
 		col = int(number)
 
-		processes_table[row][col].tau = math.ceil(1 / lmbda_c)
-		processes_table[row][col].tau_remaining = math.ceil(1 / lmbda_c)
+		processes_table[row][col].tau = math.ceil(1 / lmbda)
+		processes_table[row][col].tau_remaining = math.ceil(1 / lmbda)
 
 		processes_table[row][col].id = str(chr(letter)) + str(number)
 
@@ -479,14 +259,14 @@ if (__name__ == "__main__"):
 
 		if (type == 0):
 			if (CPU_bursts == 1):
-				print("CPU-bound process {:c}{:d}: arrival time {:d}ms; 1 CPU burst".format(letter, number, arrival_time), flush=True)
+				print("CPU-bound process {:c}{:d}: arrival time {:d}ms; 1 CPU burst".format(letter, number, arrival_time))
 			else:
-				print("CPU-bound process {:c}{:d}: arrival time {:d}ms; {:d} CPU bursts".format(letter, number, arrival_time, CPU_bursts), flush=True)
+				print("CPU-bound process {:c}{:d}: arrival time {:d}ms; {:d} CPU bursts".format(letter, number, arrival_time, CPU_bursts))
 		else:
 			if (CPU_bursts == 1):
-				print("I/O-bound process {:c}{:d}: arrival time {:d}ms; 1 CPU burst".format(letter, number, arrival_time), flush=True)
+				print("I/O-bound process {:c}{:d}: arrival time {:d}ms; 1 CPU burst".format(letter, number, arrival_time))
 			else:
-				print("I/O-bound process {:c}{:d}: arrival time {:d}ms; {:d} CPU bursts".format(letter, number, arrival_time, CPU_bursts), flush=True)
+				print("I/O-bound process {:c}{:d}: arrival time {:d}ms; {:d} CPU bursts".format(letter, number, arrival_time, CPU_bursts))
 
 		for j in range(CPU_bursts):
 			CPU_burst_time = math.ceil(next_exp(lmbda, bound))
@@ -519,15 +299,11 @@ if (__name__ == "__main__"):
 			# else:
 			# 	print("==> CPU burst {:d}ms ==> I/O burst {:d}ms".format(CPU_burst_time, IO_burst_time))
 
-	print(flush=True)
-	print("<<< PROJECT PART II", flush=True)
-	print("<<< -- t_cs={:d}ms; alpha={:.2f}; t_slice={:d}ms".format(t_cs, alpha, t_slice), flush=True)
+	print()
+	print("<<< PROJECT PART II")
+	print("<<< -- t_cs={:d}ms; alpha={:.2f}; t_slice={:d}ms".format(t_cs, alpha, t_slice))
 
 	FCFS(t_cs, alpha, t_slice)
-	print(flush=True)
-	SJF(t_cs, alpha, t_slice)
-	print(flush=True)
-	SRT(t_cs, alpha, t_slice)
 
 	CPU_avg_CPU_burst_time = 0
 	if (CPU_num_CPU_burst != 0):
